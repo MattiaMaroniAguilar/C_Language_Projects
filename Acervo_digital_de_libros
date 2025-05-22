@@ -1,0 +1,305 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// ESTRUCTURA DEL LIBRO
+// CAMBIO 1: Añadí los campos faltantes según los requerimientos
+struct Libro {
+    int clave;                    // Clave del libro (original)
+    char titulo[100];             // AMPLIADO: Era 50, ahora 100 caracteres
+    int num_paginas;              // NUEVO: Número de páginas (requerido)
+    char autor[100];              // AMPLIADO: Era 50, ahora 100 caracteres  
+    char editorial[100];          // NUEVO: Nombre de la editorial (requerido)
+    struct Libro* siguiente;      // Puntero al siguiente (original)
+};
+
+// CAMBIO 2: Mantuve la variable global
+struct Libro* inicio = NULL;     // Puntero al primer nodo de la lista
+
+// CAMBIO 3: Añadí todas las operaciones básicas requeridas en el proyecto
+
+// Función para inicializar la lista
+void inicializar_lista() {
+    inicio = NULL;
+    printf("Lista inicializada correctamente.\n");
+}
+
+// Función para obtener la posición del primer elemento
+struct Libro* posicion_primera() {
+    return inicio;
+}
+
+// Función para obtener la posición del último elemento
+struct Libro* posicion_ultima() {
+    if (inicio == NULL) {
+        return NULL;
+    }
+    
+    struct Libro* actual = inicio;
+    while (actual->siguiente != NULL) {
+        actual = actual->siguiente;
+    }
+    return actual;
+}
+
+// Función para obtener la posición del siguiente elemento
+struct Libro* posicion_siguiente(struct Libro* nodo_actual) {
+    if (nodo_actual != NULL) {
+        return nodo_actual->siguiente;
+    }
+    return NULL;
+}
+
+// Función para obtener la posición del elemento anterior
+struct Libro* posicion_anterior(struct Libro* nodo_objetivo) {
+    if (inicio == NULL || nodo_objetivo == NULL) {
+        return NULL;
+    }
+    
+    // Si el nodo objetivo es el primero, no tiene anterior
+    if (inicio == nodo_objetivo) {
+        return NULL;
+    }
+    
+    // Recorrer la lista hasta encontrar el nodo anterior
+    struct Libro* actual = inicio;
+    while (actual != NULL && actual->siguiente != nodo_objetivo) {
+        actual = actual->siguiente;
+    }
+    
+    return actual;
+}
+
+// Función para consultar si la lista está vacía
+int esta_vacia() {
+    return (inicio == NULL);
+}
+
+// FUNCIONES PRINCIPALES MEJORADAS
+
+// CAMBIO 4: Función insertarLibro mejorada con validaciones y campos nuevos
+void insertarLibro() {
+    // Crear nuevo nodo con verificación de memoria
+    struct Libro* nuevo = (struct Libro*) malloc(sizeof(struct Libro));
+    if (nuevo == NULL) {
+        printf("Error: No hay memoria disponible para insertar el libro.\n");
+        return;
+    }
+    
+    printf("\nINSERTAR NUEVO LIBRO\n");
+    
+    // Solicitar clave con validación
+    printf("Ingrese la clave del libro: ");
+    scanf("%d", &nuevo->clave);
+    
+    // NUEVA VALIDACIÓN: Verificar que la clave no exista
+    struct Libro* temp = inicio;
+    while (temp != NULL) {
+        if (temp->clave == nuevo->clave) {
+            printf("Error: Ya existe un libro con la clave %d.\n", nuevo->clave);
+            free(nuevo);  // Liberar memoria del nodo no utilizado
+            return;
+        }
+        temp = temp->siguiente;
+    }
+    
+    // CAMBIO 5: Uso de fgets en lugar de gets (más seguro)
+    printf("Ingrese el título del libro: ");
+    getchar(); // Limpiar buffer
+    fgets(nuevo->titulo, sizeof(nuevo->titulo), stdin);
+    nuevo->titulo[strcspn(nuevo->titulo, "\n")] = 0; // Eliminar salto de línea
+    
+    // NUEVO CAMPO: Número de páginas
+    printf("Ingrese el número de páginas: ");
+    scanf("%d", &nuevo->num_paginas);
+    
+    printf("Ingrese el autor del libro: ");
+    getchar(); // Limpiar buffer
+    fgets(nuevo->autor, sizeof(nuevo->autor), stdin);
+    nuevo->autor[strcspn(nuevo->autor, "\n")] = 0;
+    
+    // NUEVO CAMPO: Editorial
+    printf("Ingrese el nombre de la editorial: ");
+    fgets(nuevo->editorial, sizeof(nuevo->editorial), stdin);
+    nuevo->editorial[strcspn(nuevo->editorial, "\n")] = 0;
+    
+    // Insertar al inicio de la lista
+    nuevo->siguiente = inicio;
+    inicio = nuevo;
+    
+    printf("\nLibro insertado exitosamente.\n");
+}
+
+// CAMBIO 6: Función buscarLibro mejorada con mejor formato de salida
+void buscarLibro() {
+    if (esta_vacia()) {
+        printf("La biblioteca está vacía.\n");
+        return;
+    }
+    
+    int claveBuscada;
+    printf("\n=== BUSCAR LIBRO POR CLAVE ===\n");
+    printf("Ingrese la clave del libro a buscar: ");
+    scanf("%d", &claveBuscada);
+    
+    struct Libro* actual = inicio;
+    while (actual != NULL) {
+        if (actual->clave == claveBuscada) {
+            printf("\n--- LIBRO ENCONTRADO ---\n");
+            printf("Clave: %d\n", actual->clave);
+            printf("Título: %s\n", actual->titulo);
+            printf("Número de páginas: %d\n", actual->num_paginas);  // NUEVO
+            printf("Autor: %s\n", actual->autor);
+            printf("Editorial: %s\n", actual->editorial);            // NUEVO
+            return;
+        }
+        actual = actual->siguiente;
+    }
+    printf("\nLibro con clave %d no encontrado.\n", claveBuscada);
+}
+
+// CAMBIO 7: Función borrarLibro con mejor manejo de casos
+void borrarLibro() {
+    if (esta_vacia()) {
+        printf("La biblioteca está vacía. No hay libros para borrar.\n");
+        return;
+    }
+    
+    int claveBorrar;
+    printf("\n=== BORRAR LIBRO ===\n");
+    printf("Ingrese la clave del libro a borrar: ");
+    scanf("%d", &claveBorrar);
+    
+    struct Libro* actual = inicio;
+    struct Libro* anterior = NULL;
+    
+    // Buscar el libro a eliminar
+    while (actual != NULL && actual->clave != claveBorrar) {
+        anterior = actual;
+        actual = actual->siguiente;
+    }
+    
+    if (actual == NULL) {
+        printf("\nLibro con clave %d no encontrado.\n", claveBorrar);
+        return;
+    }
+    
+    // Mostrar información del libro antes de borrarlo
+    printf("\nSe borrará el siguiente libro:\n");
+    printf("Título: %s\n", actual->titulo);
+    printf("Autor: %s\n", actual->autor);
+    
+    // Eliminar el nodo
+    if (anterior == NULL) {
+        // El libro a borrar es el primero
+        inicio = actual->siguiente;
+    } else {
+        // El libro está en el medio o al final
+        anterior->siguiente = actual->siguiente;
+    }
+    
+    free(actual);
+    printf("\nLibro borrado exitosamente.\n");
+}
+
+// CAMBIO 8: Nueva función para mostrar todos los libros
+void mostrarTodosLosLibros() {
+    if (esta_vacia()) {
+        printf("La biblioteca está vacía.\n");
+        return;
+    }
+    
+    printf("\n=== TODOS LOS LIBROS EN LA BIBLIOTECA ===\n");
+    struct Libro* actual = inicio;
+    int contador = 1;
+    
+    while (actual != NULL) {
+        printf("\n--- Libro %d ---\n", contador);
+        printf("Clave: %d\n", actual->clave);
+        printf("Título: %s\n", actual->titulo);
+        printf("Páginas: %d\n", actual->num_paginas);
+        printf("Autor: %s\n", actual->autor);
+        printf("Editorial: %s\n", actual->editorial);
+        
+        actual = actual->siguiente;
+        contador++;
+    }
+    printf("\nTotal de libros: %d\n", contador - 1);
+}
+
+// CAMBIO 9: Nueva función para liberar toda la memoria
+void liberarMemoria() {
+    struct Libro* actual = inicio;
+    struct Libro* siguiente;
+    
+    while (actual != NULL) {
+        siguiente = actual->siguiente;
+        free(actual);
+        actual = siguiente;
+    }
+    
+    inicio = NULL;
+    printf("Memoria liberada correctamente.\n");
+}
+
+// CAMBIO 10: Menú mejorado con mejor formato y opción adicional
+void menu() {
+    int opcion;
+    
+    // Inicializar la lista al comenzar
+    printf("=== SISTEMA DE GESTIÓN DE BIBLIOTECA ===\n");
+    printf("Inicializando sistema...\n");
+    inicializar_lista();
+    
+    do {
+        printf("\n=== ACERVO DE LIBROS ===\n");
+        printf("1. Insertar libro\n");
+        printf("2. Buscar libro por clave\n");
+        printf("3. Borrar libro\n");
+        printf("4. Mostrar todos los libros\n");        // NUEVA OPCIÓN
+        printf("5. Salir\n");                           // CAMBIO: Era opción 4
+        printf("Seleccione una opción (1-5): ");
+        scanf("%d", &opcion);
+        
+        switch(opcion) {
+            case 1:
+                insertarLibro();
+                break;
+            case 2:
+                buscarLibro();
+                break;
+            case 3:
+                borrarLibro();
+                break;
+            case 4:
+                mostrarTodosLosLibros();
+                break;
+            case 5:
+                printf("\n¡Gracias por usar el Sistema de Gestión de Biblioteca!\n");
+                printf("Liberando memoria y cerrando programa...\n");
+                liberarMemoria();  // NUEVO: Liberar memoria antes de salir
+                break;
+            default:
+                printf("\nOpción no válida. Por favor, seleccione una opción del 1 al 5.\n");
+        }
+        
+        // CAMBIO 11: Pausa para que el usuario pueda leer los resultados
+        if (opcion != 5 && opcion >= 1 && opcion <= 4) {
+            printf("\nPresione Enter para continuar...");
+            getchar();
+            getchar();
+        }
+        
+    } while(opcion != 5);
+}
+
+// CAMBIO 12: Función principal con mejor estructura
+int main() {
+    printf("¡Bienvenido al Sistema de Gestión de Biblioteca!\n");
+    printf("Este programa permite gestionar un acervo de libros.\n\n");
+    
+    menu();
+    
+    printf("\nPrograma terminado correctamente.\n");
+    return 0;
+};
